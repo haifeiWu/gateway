@@ -1,11 +1,11 @@
-# This is a gateway config.
-name: helloworld
+# This is a push-gateway config.
+name: push-push-gateway
 version: v1
 middlewares:
-  - name: tracing
-    options:
-      '@type': type.googleapis.com/gateway.middleware.tracing.v1.Tracing
-      httpEndpoint: 'localhost:4318' # default opentelemetry collector port
+#  - name: tracing
+#    options:
+#      '@type': type.googleapis.com/push-gateway.middleware.tracing.v1.Tracing
+#      httpEndpoint: 'localhost:4318' # default opentelemetry collector port
   - name: logging
   - name: transcoder
   - name: cors
@@ -19,36 +19,36 @@ middlewares:
         - POST
         - OPTIONS
 endpoints:
-  - path: /helloworld/*
+  - path: /v1/*
     timeout: 1s
     protocol: HTTP
-    host: localhost
+    host: 127.0.0.1
     backends:
-      - target: '127.0.0.1:8000'
+      - target: '127.0.0.1:8088'
 #      - target: 'discovery:///bbs'
     middlewares:
       - name: circuitbreaker
         options:
           '@type': type.googleapis.com/gateway.middleware.circuitbreaker.v1.CircuitBreaker
           successRatio: {"success":0.6, "request":"1", "bucket":"10", "window":"3s"}
-          backupService: {"endpoint":{"backends":[{"target":"127.0.0.1:8001"}]}}
+          backupService: {"endpoint":{"backends":[{"target":"127.0.0.1:8088"}]}}
           assertCondtions:
           - {"by_status_code":"200"}
       - name: rewrite
         options:
           '@type': type.googleapis.com/gateway.middleware.rewrite.v1.Rewrite
 #          stripPrefix: /bbs
-  - path: /helloworld.Greeter/*
+  - path: /api.message_center.v1.MessageCenter/*
     method: POST
-    timeout: 1s
+    timeout: 10s
     protocol: GRPC
     backends:
-      - target: '127.0.0.1:9000'
-    retry:
-      attempts: 3
-      perTryTimeout: 0.1s
-      conditions:
-        - byStatusCode: '502-504'
-        - byHeader:
-            name: 'Grpc-Status'
-            value: '14'
+      - target: '127.0.0.1:9002'
+#    retry:
+#      attempts: 3
+#      perTryTimeout: 0.1s
+#      conditions:
+#        - byStatusCode: '502-504'
+#        - byHeader:
+#            name: 'Grpc-Status'
+#            value: '14'
